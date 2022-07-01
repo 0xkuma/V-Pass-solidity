@@ -180,4 +180,14 @@ contract VaccinePassport is Ownable {
         isConfirmed[_txIndex][msg.sender] = false;
         vaccineRecordAccess.numConfirmations--;
     }
+
+    //get vaccineRecordAccessList length
+    function getVaccineRecordAccessListLength() public view returns (uint256) {
+        return vaccineRecordAccessList.length;
+    }
+
+    // greeting
+    function greeting() public pure returns (string memory) {
+        return "Hello, World!";
+    }
 }

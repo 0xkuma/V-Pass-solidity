@@ -14,6 +14,13 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
+
+  const [deployer] = await ethers.getSigners();
+  console.log(`Deploying contracts with the account: ${deployer.address}`);
+
+  const balance = await deployer.getBalance();
+  console.log(`Deployer balance: ${balance.toString()}`);
+
   const VaccinePassport = await ethers.getContractFactory("VaccinePassport");
   const vaccinePassport = await VaccinePassport.deploy();
 
