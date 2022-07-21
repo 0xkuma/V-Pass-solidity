@@ -5,13 +5,13 @@ import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
 contract VaccinePassport is Ownable {
     struct Users {
+        string userName;
+        bool isActive;
         uint256 numVaccinations;
         mapping(uint256 => VaccineRecordDetail) vaccineRecordDetail;
-        // mapping(uint=>VaccineRecordAccess) vaccineRecordAccess;
     }
 
     struct VaccineRecordDetail {
-        string userName;
         string vaccineType;
         string location;
         uint256 timestamp;
@@ -24,6 +24,13 @@ contract VaccinePassport is Ownable {
     }
 
     mapping(address => Users) private users;
+
+    function createUserProfile(string memory _userName) public {
+        require(!users[msg.sender].isActive, "User already exists.");
+        users[msg.sender].userName = _userName;
+        users[msg.sender].numVaccinations = 0;
+        users[msg.sender].isActive = true;
+    }
 
     function isValidVaccine(string memory _vaccineType)
         private
@@ -44,17 +51,15 @@ contract VaccinePassport is Ownable {
 
     function addVaccineRecord(
         address _userAddress,
-        string memory _userName,
         string memory _vaccineType,
         string memory _location
     ) public onlyOwner {
         require(isValidVaccine(_vaccineType), "Invalid vaccine type.");
         Users storage user = users[_userAddress];
         uint256 numVaccinations = user.numVaccinations;
-        user.vaccineRecordDetail[numVaccinations].userName = _userName;
         user.vaccineRecordDetail[numVaccinations].vaccineType = _vaccineType;
         user.vaccineRecordDetail[numVaccinations].location = _location;
-        numVaccinations++;
+        user.numVaccinations++;
     }
 
     VaccineRecordAccess[] public vaccineRecordAccessList;
@@ -118,6 +123,14 @@ contract VaccinePassport is Ownable {
         return vaccineRecordAccessList[_txIndex].numConfirmations;
     }
 
+    event VaccineRecordEvent(
+        address indexed _userAddress,
+        string _userName,
+        string _vaccineType,
+        string _location,
+        uint256 _timestamp
+    );
+
     // read record
     function executeReadVaccineRecord(uint256 _txIndex)
         public
@@ -134,9 +147,7 @@ contract VaccinePassport is Ownable {
             storage vaccineRecordAccess = vaccineRecordAccessList[_txIndex];
         require(vaccineRecordAccess.numConfirmations == 2, "cannot execute tx");
         vaccineRecordAccess.executed = true;
-        _userName = users[vaccineRecordAccess.accessAddress]
-            .vaccineRecordDetail[_txIndex]
-            .userName;
+        _userName = users[vaccineRecordAccess.accessAddress].userName;
         _vaccineType = users[vaccineRecordAccess.accessAddress]
             .vaccineRecordDetail[_txIndex]
             .vaccineType;
@@ -146,6 +157,13 @@ contract VaccinePassport is Ownable {
         _timestamp = users[vaccineRecordAccess.accessAddress]
             .vaccineRecordDetail[_txIndex]
             .timestamp;
+        emit VaccineRecordEvent(
+            vaccineRecordAccess.accessAddress,
+            _userName,
+            _vaccineType,
+            _location,
+            _timestamp
+        );
         return (_userName, _vaccineType, _location, _timestamp);
         // VaccineRecordDetail memory vaccineRecordDetail = users[vaccineRecordAccess.accessAddress].vaccineRecordDetail[0];
         // return vaccineRecordDetail;
@@ -166,5 +184,50 @@ contract VaccinePassport is Ownable {
             memory vaccineRecordAccess = vaccineRecordAccessList[_txIndex];
         isConfirmed[_txIndex][msg.sender] = false;
         vaccineRecordAccess.numConfirmations--;
+    }
+
+    // get vaccineReadRecord length
+    function getVaccineReadRecordLength() public view returns (uint256) {
+        return vaccineRecordAccessList.length;
+    }
+
+    //greeting
+    function greeting() public pure returns (string memory) {
+        return "Hello, world!";
+    }
+
+    struct test {
+        uint256 num;
+        string name;
+    }
+    test[] public testList;
+
+    event TestEvent(uint256 indexed _num, string _name);
+
+    function addTest(uint256 num, string memory name) public {
+        testList.push(test({num: num, name: name}));
+        emit TestEvent(num, name);
+    }
+
+    // get vaccineReadRecord length
+    function getVaccineRecord(uint256 _txIndex, address _userAddress)
+        public
+        view
+        returns (
+            string memory _userName,
+            string memory _vaccineType,
+            string memory _location,
+            uint256 _timestamp
+        )
+    {
+        _userName = users[_userAddress].userName;
+        _vaccineType = users[_userAddress]
+            .vaccineRecordDetail[_txIndex]
+            .vaccineType;
+        _location = users[_userAddress].vaccineRecordDetail[_txIndex].location;
+        _timestamp = users[_userAddress]
+            .vaccineRecordDetail[_txIndex]
+            .timestamp;
+        return (_userName, _vaccineType, _location, _timestamp);
     }
 }

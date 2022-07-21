@@ -14,7 +14,7 @@ module.exports = function (deployer) {
       contractAddress,
       contractName,
     };
-    fs.writeFileSync('./contract.json', JSON.stringify(contract, null, 2));
+    fs.writeFileSync('/Users/kuma/Desktop/Repo/BC/fyp/v-pass/src/common/VaccinePassport.json', JSON.stringify(contract, null, 2));
     return contract;
   });
 };
