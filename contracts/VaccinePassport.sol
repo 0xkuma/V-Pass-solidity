@@ -6,6 +6,8 @@ import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 contract VaccinePassport is Ownable {
     struct Users {
         string userName;
+        string idNumber;
+        string birthDate;
         bool isActive;
         uint256 numVaccinations;
         mapping(uint256 => VaccineRecordDetail) vaccineRecordDetail;
@@ -25,11 +27,37 @@ contract VaccinePassport is Ownable {
 
     mapping(address => Users) private users;
 
-    function createUserProfile(string memory _userName) public {
+    function createUserProfile(
+        string memory _userName,
+        string memory _idNumber,
+        string memory _birthDate
+    ) public {
         require(!users[msg.sender].isActive, "User already exists.");
         users[msg.sender].userName = _userName;
+        users[msg.sender].idNumber = _idNumber;
+        users[msg.sender].birthDate = _birthDate;
         users[msg.sender].numVaccinations = 0;
         users[msg.sender].isActive = true;
+    }
+
+    function isExistingUser() public view returns (bool) {
+        return users[msg.sender].isActive;
+    }
+
+    function getUserProfile()
+        public
+        view
+        returns (
+            string memory,
+            string memory,
+            string memory
+        )
+    {
+        return (
+            users[msg.sender].userName,
+            users[msg.sender].idNumber,
+            users[msg.sender].birthDate
+        );
     }
 
     function isValidVaccine(string memory _vaccineType)
