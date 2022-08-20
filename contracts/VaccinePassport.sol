@@ -50,13 +50,17 @@ contract VaccinePassport is Ownable {
         returns (
             string memory,
             string memory,
-            string memory
+            string memory,
+            bool,
+            uint256
         )
     {
         return (
             users[msg.sender].userName,
             users[msg.sender].idNumber,
-            users[msg.sender].birthDate
+            users[msg.sender].birthDate,
+            users[msg.sender].isActive,
+            users[msg.sender].numVaccinations
         );
     }
 
@@ -65,7 +69,7 @@ contract VaccinePassport is Ownable {
         pure
         returns (bool)
     {
-        string[2] memory vaccineList = ["AAA", "BBB"];
+        string[2] memory vaccineList = ["CoronaVac", "Comirnaty"];
         for (uint256 i; i < vaccineList.length; i++) {
             if (
                 keccak256(abi.encodePacked(_vaccineType)) ==
@@ -87,7 +91,39 @@ contract VaccinePassport is Ownable {
         uint256 numVaccinations = user.numVaccinations;
         user.vaccineRecordDetail[numVaccinations].vaccineType = _vaccineType;
         user.vaccineRecordDetail[numVaccinations].location = _location;
+        user.vaccineRecordDetail[numVaccinations].timestamp = block.timestamp;
         user.numVaccinations++;
+    }
+
+    function getUserVaccineRecord()
+        public
+        view
+        returns (
+            string[] memory,
+            string[] memory,
+            uint256[] memory
+        )
+    {
+        Users storage user = users[msg.sender];
+        string[] memory mVaccineType = new string[](user.numVaccinations);
+        string[] memory mLocation = new string[](user.numVaccinations);
+        uint256[] memory mTimestamp = new uint256[](user.numVaccinations);
+        for (uint256 i; i < user.numVaccinations; i++) {
+            mVaccineType[i] = user.vaccineRecordDetail[i].vaccineType;
+            mLocation[i] = user.vaccineRecordDetail[i].location;
+            mTimestamp[i] = user.vaccineRecordDetail[i].timestamp;
+        }
+
+        return (mVaccineType, mLocation, mTimestamp);
+    }
+
+    function joinTheEvent() public returns (bool) {
+        Users storage user = users[msg.sender];
+        if (user.isActive) {
+            return false;
+        }
+        user.isActive = true;
+        return true;
     }
 
     VaccineRecordAccess[] public vaccineRecordAccessList;
@@ -214,48 +250,4 @@ contract VaccinePassport is Ownable {
         vaccineRecordAccess.numConfirmations--;
     }
 
-    // get vaccineReadRecord length
-    function getVaccineReadRecordLength() public view returns (uint256) {
-        return vaccineRecordAccessList.length;
-    }
-
-    //greeting
-    function greeting() public pure returns (string memory) {
-        return "Hello, world!";
-    }
-
-    struct test {
-        uint256 num;
-        string name;
-    }
-    test[] public testList;
-
-    event TestEvent(uint256 indexed _num, string _name);
-
-    function addTest(uint256 num, string memory name) public {
-        testList.push(test({num: num, name: name}));
-        emit TestEvent(num, name);
-    }
-
-    // get vaccineReadRecord length
-    function getVaccineRecord(uint256 _txIndex, address _userAddress)
-        public
-        view
-        returns (
-            string memory _userName,
-            string memory _vaccineType,
-            string memory _location,
-            uint256 _timestamp
-        )
-    {
-        _userName = users[_userAddress].userName;
-        _vaccineType = users[_userAddress]
-            .vaccineRecordDetail[_txIndex]
-            .vaccineType;
-        _location = users[_userAddress].vaccineRecordDetail[_txIndex].location;
-        _timestamp = users[_userAddress]
-            .vaccineRecordDetail[_txIndex]
-            .timestamp;
-        return (_userName, _vaccineType, _location, _timestamp);
-    }
 }
